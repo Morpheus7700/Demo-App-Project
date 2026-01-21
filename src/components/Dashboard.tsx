@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import {
-  DollarSign,
+import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, AreaChart, Area, XAxis, YAxis, CartesianGrid } from 'recharts';
+import {   DollarSign,
   TrendingUp,
   TrendingDown,
   Activity,
@@ -173,7 +172,37 @@ export default function Dashboard() {
       }
       return acc;
     }, [])
-    .sort((a, b) => b.value - a.value); // Sort largest expenses first
+    .sort((a, b) => b.value - a.value);
+
+  // Trend Data Logic
+  const trendData = (() => {
+      const last30Days = Array.from({ length: 30 }, (_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (29 - i));
+          return d.toISOString().split('T')[0];
+      });
+
+      let runningBalance = 0;
+      // Calculate initial balance prior to 30 days ago (simplified for demo: starts at 0 or matches first trans)
+      
+      return last30Days.map(date => {
+          const dayTransactions = transactions.filter(t => t.date.startsWith(date));
+          const dailyIncome = dayTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+          const dailyExpense = dayTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+          
+          // In a real app, you'd calculate the running balance from the beginning of time. 
+          // Here we just show daily net flow or a cumulative if we had full history.
+          // Let's show Cumulative Balance for the view.
+          runningBalance += (dailyIncome - dailyExpense);
+
+          return {
+              date: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+              balance: runningBalance,
+              income: dailyIncome,
+              expense: dailyExpense
+          };
+      });
+  })();
 
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -296,47 +325,99 @@ export default function Dashboard() {
                 {/* Left Column: Chart & History */}
                 <div className="xl:col-span-2 space-y-8">
                     {/* Charts Section */}
-                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
-                        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Spending Analysis</h3>
-                        {categoryData.length > 0 ? (
-                            <div className="h-72 w-full">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Area Chart: Trend */}
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors lg:col-span-2">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Balance Trend (30 Days)</h3>
+                            <div className="h-64 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                    data={categoryData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={80}
-                                    outerRadius={100}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                    stroke="none"
-                                    >
-                                    {categoryData.map((_, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                    </Pie>
-                                    <Tooltip 
-                                        formatter={(value: number | undefined) => formatCurrency(value ?? 0)}
-                                        contentStyle={{ 
-                                            backgroundColor: 'var(--tooltip-bg)', 
-                                            borderRadius: '8px', 
-                                            border: 'none', 
-                                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                                            color: 'var(--tooltip-text)'
-                                        }}
-                                        itemStyle={{ color: 'inherit' }}
-                                    />
-                                    <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" />
-                                </PieChart>
+                                    <AreaChart data={trendData}>
+                                        <defs>
+                                            <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
+                                        <XAxis 
+                                            dataKey="date" 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            tick={{fontSize: 12, fill: '#94a3b8'}} 
+                                            dy={10}
+                                        />
+                                        <YAxis 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            tick={{fontSize: 12, fill: '#94a3b8'}} 
+                                            tickFormatter={(value) => `$${value}`}
+                                        />
+                                        <Tooltip 
+                                            contentStyle={{ 
+                                                backgroundColor: 'var(--tooltip-bg)', 
+                                                borderRadius: '8px', 
+                                                border: 'none', 
+                                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                                color: 'var(--tooltip-text)'
+                                            }}
+                                            formatter={(value: number | undefined) => [formatCurrency(value ?? 0), 'Balance']}
+                                        />
+                                        <Area 
+                                            type="monotone" 
+                                            dataKey="balance" 
+                                            stroke="#6366f1" 
+                                            strokeWidth={3}
+                                            fillOpacity={1} 
+                                            fill="url(#colorBalance)" 
+                                        />
+                                    </AreaChart>
                                 </ResponsiveContainer>
                             </div>
-                        ) : (
-                            <div className="h-72 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
-                                <Activity size={32} className="mb-2 opacity-50"/>
-                                <p>No expenses recorded yet.</p>
-                            </div>
-                        )}
+                        </div>
+
+                        {/* Pie Chart: Spending */}
+                        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors lg:col-span-2">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Spending Analysis</h3>
+                            {categoryData.length > 0 ? (
+                                <div className="h-72 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                        data={categoryData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={80}
+                                        outerRadius={100}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                        stroke="none"
+                                        >
+                                        {categoryData.map((_, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                        </Pie>
+                                        <Tooltip 
+                                            formatter={(value: number | undefined) => formatCurrency(value ?? 0)}
+                                            contentStyle={{ 
+                                                backgroundColor: 'var(--tooltip-bg)', 
+                                                borderRadius: '8px', 
+                                                border: 'none', 
+                                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                                color: 'var(--tooltip-text)'
+                                            }}
+                                            itemStyle={{ color: 'inherit' }}
+                                        />
+                                        <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" />
+                                    </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            ) : (
+                                <div className="h-72 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                                    <Activity size={32} className="mb-2 opacity-50"/>
+                                    <p>No expenses recorded yet.</p>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Recent Transactions Table */}

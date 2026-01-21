@@ -19,6 +19,7 @@ import type { Transaction, Financials, TransactionCategory } from '../types';
 import { TransactionService } from '../services/transactionService';
 import { InsightService } from '../services/insightService';
 import { cn, formatCurrency } from '../lib/utils';
+import { ThemeToggle } from './ThemeToggle';
 
 // --- Validation Schema ---
 const transactionSchema = z.object({
@@ -134,44 +135,47 @@ export default function Dashboard() {
     .sort((a, b) => b.value - a.value); // Sort largest expenses first
 
   if (loading) return (
-    <div className="h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+    <div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 dark:border-indigo-400"></div>
     </div>
   );
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans text-slate-900">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans text-slate-900 dark:text-slate-50 transition-colors duration-300">
       
       {/* Sidebar / Desktop */}
-      <aside className="w-80 bg-white border-r border-slate-200 p-6 hidden md:flex flex-col shadow-sm z-10">
-        <div className="flex items-center gap-3 mb-10 text-indigo-600">
-          <div className="p-2 bg-indigo-100 rounded-lg">
+      <aside className="w-80 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-6 hidden md:flex flex-col shadow-sm z-10 transition-colors duration-300">
+        <div className="flex items-center gap-3 mb-10 text-indigo-600 dark:text-indigo-400">
+          <div className="p-2 bg-indigo-100 dark:bg-indigo-500/20 rounded-lg">
              <Wallet size={24} />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">WealthWise</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">WealthWise</h1>
         </div>
         
-        <div className="bg-gradient-to-br from-indigo-50 to-blue-50 p-5 rounded-2xl border border-indigo-100 mb-6">
-          <div className="flex items-center gap-2 text-indigo-700 font-semibold mb-4">
+        <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-slate-800 dark:to-slate-800/50 p-5 rounded-2xl border border-indigo-100 dark:border-slate-700 mb-6">
+          <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-semibold mb-4">
             <Lightbulb size={20} />
             <span>Smart Insights</span>
           </div>
           <div className="space-y-3">
             {insights.map((insight, idx) => (
-              <div key={idx} className="text-sm text-slate-700 bg-white/80 backdrop-blur-sm p-3 rounded-xl shadow-sm border border-indigo-50/50 leading-relaxed">
+              <div key={idx} className="text-sm text-slate-700 dark:text-slate-300 bg-white/80 dark:bg-slate-900/50 backdrop-blur-sm p-3 rounded-xl shadow-sm border border-indigo-50/50 dark:border-slate-700 leading-relaxed">
                 {insight}
               </div>
             ))}
-            {insights.length === 0 && <p className="text-sm text-slate-500 italic">Add more data to generate insights.</p>}
+            {insights.length === 0 && <p className="text-sm text-slate-500 dark:text-slate-400 italic">Add more data to generate insights.</p>}
           </div>
         </div>
 
-        <div className="mt-auto pt-6 border-t border-slate-100">
-            <div className="flex items-center gap-3 text-slate-500 text-sm">
-                <div className="h-2 w-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                Serverless Mode Active
+        <div className="mt-auto pt-6 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm">
+                    <div className="h-2 w-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                    Online
+                </div>
+                <ThemeToggle />
             </div>
-            <p className="text-xs text-slate-400 mt-2">v2.0.0 • Local Persistence</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-4">v2.1.0 • Local Persistence</p>
         </div>
       </aside>
 
@@ -181,42 +185,47 @@ export default function Dashboard() {
             
             <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-                <h2 className="text-2xl font-bold text-slate-800">Financial Overview</h2>
-                <p className="text-slate-500 mt-1">Track your wealth in real-time.</p>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Financial Overview</h2>
+                <p className="text-slate-500 dark:text-slate-400 mt-1">Track your wealth in real-time.</p>
             </div>
-            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200 text-sm font-medium text-slate-600">
-                 <Activity size={16} className="text-indigo-500" />
-                 <span>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+            <div className="flex items-center gap-4">
+                <div className="md:hidden">
+                    <ThemeToggle />
+                </div>
+                <div className="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-2 rounded-full shadow-sm border border-slate-200 dark:border-slate-800 text-sm font-medium text-slate-600 dark:text-slate-300">
+                    <Activity size={16} className="text-indigo-500 dark:text-indigo-400" />
+                    <span>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+                </div>
             </div>
             </header>
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden group">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 relative overflow-hidden group transition-colors">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <DollarSign size={80} className="text-slate-900"/>
+                    <DollarSign size={80} className="text-slate-900 dark:text-slate-100"/>
                 </div>
-                <p className="text-sm font-medium text-slate-500 mb-2">Total Balance</p>
-                <h3 className={cn("text-4xl font-bold tracking-tight", financials.balance >= 0 ? "text-slate-800" : "text-rose-600")}>
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Total Balance</p>
+                <h3 className={cn("text-4xl font-bold tracking-tight", financials.balance >= 0 ? "text-slate-800 dark:text-white" : "text-rose-600 dark:text-rose-400")}>
                     {formatCurrency(financials.balance)}
                 </h3>
             </div>
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center relative overflow-hidden">
-                 <div className="absolute right-6 top-6 p-2 bg-emerald-50 text-emerald-600 rounded-full">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-center relative overflow-hidden transition-colors">
+                 <div className="absolute right-6 top-6 p-2 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full">
                     <TrendingUp size={20} />
                  </div>
-                <p className="text-sm font-medium text-slate-500 mb-1">Total Income</p>
-                <h3 className="text-2xl font-bold text-emerald-600 flex items-center gap-1">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Total Income</p>
+                <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                     <ArrowUpRight size={24} />
                     {formatCurrency(financials.income)}
                 </h3>
             </div>
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-center relative overflow-hidden">
-                <div className="absolute right-6 top-6 p-2 bg-rose-50 text-rose-600 rounded-full">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col justify-center relative overflow-hidden transition-colors">
+                <div className="absolute right-6 top-6 p-2 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-full">
                     <TrendingDown size={20} />
                 </div>
-                <p className="text-sm font-medium text-slate-500 mb-1">Total Expenses</p>
-                <h3 className="text-2xl font-bold text-rose-600 flex items-center gap-1">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Total Expenses</p>
+                <h3 className="text-2xl font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1">
                     <ArrowDownRight size={24} />
                     {formatCurrency(financials.expense)}
                 </h3>
@@ -228,8 +237,8 @@ export default function Dashboard() {
                 {/* Left Column: Chart & History */}
                 <div className="xl:col-span-2 space-y-8">
                     {/* Charts Section */}
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                        <h3 className="text-lg font-bold text-slate-800 mb-6">Spending Analysis</h3>
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Spending Analysis</h3>
                         {categoryData.length > 0 ? (
                             <div className="h-72 w-full">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -250,14 +259,21 @@ export default function Dashboard() {
                                     </Pie>
                                     <Tooltip 
                                         formatter={(value: number | undefined) => formatCurrency(value ?? 0)}
-                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        contentStyle={{ 
+                                            backgroundColor: 'var(--tooltip-bg)', 
+                                            borderRadius: '8px', 
+                                            border: 'none', 
+                                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                            color: 'var(--tooltip-text)'
+                                        }}
+                                        itemStyle={{ color: 'inherit' }}
                                     />
                                     <Legend verticalAlign="middle" align="right" layout="vertical" iconType="circle" />
                                 </PieChart>
                                 </ResponsiveContainer>
                             </div>
                         ) : (
-                            <div className="h-72 flex flex-col items-center justify-center text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                            <div className="h-72 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
                                 <Activity size={32} className="mb-2 opacity-50"/>
                                 <p>No expenses recorded yet.</p>
                             </div>
@@ -265,15 +281,15 @@ export default function Dashboard() {
                     </div>
 
                     {/* Recent Transactions Table */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                            <h3 className="text-lg font-bold text-slate-800">Recent Transactions</h3>
-                            <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">{transactions.length} Records</span>
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Recent Transactions</h3>
+                            <span className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">{transactions.length} Records</span>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="bg-slate-50/50 text-slate-500 text-xs font-semibold uppercase tracking-wider">
+                                <tr className="bg-slate-50/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
                                 <th className="p-4 pl-6">Description</th>
                                 <th className="p-4">Category</th>
                                 <th className="p-4">Date</th>
@@ -281,30 +297,30 @@ export default function Dashboard() {
                                 <th className="p-4 text-center">Action</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {transactions.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="p-8 text-center text-slate-400 italic">
+                                        <td colSpan={5} className="p-8 text-center text-slate-400 dark:text-slate-500 italic">
                                             No transactions found. Add one to get started.
                                         </td>
                                     </tr>
                                 ) : (
                                     transactions.map((t) => (
-                                    <tr key={t.id} className="group hover:bg-slate-50/80 transition-colors">
-                                        <td className="p-4 pl-6 font-medium text-slate-700">{t.description}</td>
+                                    <tr key={t.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                                        <td className="p-4 pl-6 font-medium text-slate-700 dark:text-slate-200">{t.description}</td>
                                         <td className="p-4">
-                                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                                                 {t.category}
                                             </span>
                                         </td>
-                                        <td className="p-4 text-slate-500 text-sm">{new Date(t.date).toLocaleDateString()}</td>
-                                        <td className={cn("p-4 font-bold text-right", t.type === 'income' ? 'text-emerald-600' : 'text-slate-700')}>
+                                        <td className="p-4 text-slate-500 dark:text-slate-400 text-sm">{new Date(t.date).toLocaleDateString()}</td>
+                                        <td className={cn("p-4 font-bold text-right", t.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200')}>
                                             {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
                                         </td>
                                         <td className="p-4 text-center">
                                             <button 
                                                 onClick={() => handleDelete(t.id)}
-                                                className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                className="p-2 text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
                                                 title="Delete Transaction"
                                             >
                                                 <Trash2 size={18} />
@@ -321,9 +337,9 @@ export default function Dashboard() {
 
                 {/* Right Column: Form */}
                 <div className="xl:col-span-1">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 sticky top-6">
-                        <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                            <div className="p-1.5 bg-indigo-100 text-indigo-600 rounded-lg">
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 sticky top-6 transition-colors">
+                        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                            <div className="p-1.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-lg">
                                 <Plus size={18} />
                             </div>
                             New Transaction
@@ -331,26 +347,26 @@ export default function Dashboard() {
                         
                         <form onSubmit={handleAddTransaction} className="space-y-5">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Description</label>
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Description</label>
                                 <input
                                     type="text"
                                     name="description"
                                     value={formData.description}
                                     onChange={handleInputChange}
                                     className={cn(
-                                        "w-full px-4 py-2.5 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all",
-                                        errors.description ? "border-rose-300 focus:border-rose-500" : "border-slate-200"
+                                        "w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500",
+                                        errors.description ? "border-rose-300 dark:border-rose-700 focus:border-rose-500" : "border-slate-200 dark:border-slate-700"
                                     )}
                                     placeholder="e.g., Grocery Shopping"
                                 />
-                                {errors.description && <p className="text-xs text-rose-500 mt-1">{errors.description}</p>}
+                                {errors.description && <p className="text-xs text-rose-500 dark:text-rose-400 mt-1">{errors.description}</p>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Amount</label>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Amount</label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">$</span>
                                         <input
                                             type="number"
                                             name="amount"
@@ -358,21 +374,21 @@ export default function Dashboard() {
                                             value={formData.amount || ''}
                                             onChange={handleInputChange}
                                             className={cn(
-                                                "w-full pl-7 pr-4 py-2.5 bg-slate-50 border rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all",
-                                                errors.amount ? "border-rose-300 focus:border-rose-500" : "border-slate-200"
+                                                "w-full pl-7 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500",
+                                                errors.amount ? "border-rose-300 dark:border-rose-700 focus:border-rose-500" : "border-slate-200 dark:border-slate-700"
                                             )}
                                             placeholder="0.00"
                                         />
                                     </div>
-                                    {errors.amount && <p className="text-xs text-rose-500 mt-1">{errors.amount}</p>}
+                                    {errors.amount && <p className="text-xs text-rose-500 dark:text-rose-400 mt-1">{errors.amount}</p>}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Type</label>
+                                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Type</label>
                                     <select
                                         name="type"
                                         value={formData.type}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer"
+                                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all appearance-none cursor-pointer text-slate-900 dark:text-white"
                                     >
                                         <option value="expense">Expense</option>
                                         <option value="income">Income</option>
@@ -381,12 +397,12 @@ export default function Dashboard() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Category</label>
+                                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Category</label>
                                 <select
                                     name="category"
                                     value={formData.category}
                                     onChange={handleInputChange}
-                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer"
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer text-slate-900 dark:text-white"
                                 >
                                     <option value="Food">Food 🍔</option>
                                     <option value="Housing">Housing 🏠</option>
@@ -403,7 +419,7 @@ export default function Dashboard() {
 
                             <button
                                 type="submit"
-                                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-slate-900/10 hover:shadow-slate-900/20 active:scale-[0.98] flex items-center justify-center gap-2"
+                                className="w-full bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-slate-900/10 dark:shadow-indigo-900/20 hover:shadow-slate-900/20 dark:hover:shadow-indigo-900/30 active:scale-[0.98] flex items-center justify-center gap-2"
                             >
                                 <Plus size={20} />
                                 Add Transaction

@@ -1,12 +1,15 @@
 import { StrictMode } from 'react';
 import Dashboard from './components/Dashboard';
 import { Toaster } from 'sonner';
+import { ThemeProvider } from './components/ThemeProvider';
 
 function App() {
   return (
     <StrictMode>
-      <Dashboard />
-      <Toaster position="top-right" richColors />
+      <ThemeProvider defaultTheme="system" storageKey="wealthwise-theme">
+        <Dashboard />
+        <Toaster position="top-right" richColors />
+      </ThemeProvider>
     </StrictMode>
   );
 }

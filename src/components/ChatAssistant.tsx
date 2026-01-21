@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Bot, Globe, Loader2, Sparkles, User } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, formatCurrency } from '../lib/utils';
+import type { Transaction } from '../types';
 
 type Message = {
   id: string;
@@ -10,9 +11,14 @@ type Message = {
   isThinking?: boolean;
 };
 
+type ChatAssistantProps = {
+  transactions: Transaction[];
+  userName: string;
+};
+
 // Simulated knowledge base
 const KNOWLEDGE_BASE = {
-  default: "I can help you with budgeting, saving tips, and understanding your spending habits. Try asking 'How can I save money on groceries?' or 'What is the 50/30/20 rule?'",
+  default: "I can help you with budgeting, saving tips, and understanding your spending habits. Try asking 'How much have I spent on food?' or 'What is my total balance?'",
   savings: "To improve your savings, consider the 50/30/20 rule: 50% for needs, 30% for wants, and 20% for savings. Also, automated transfers to a high-yield savings account can be very effective.",
   investing: "Investing is a great way to build wealth over time. Popular options include index funds, ETFs, and individual stocks. Remember to diversify your portfolio to manage risk.",
   budgeting: "A zero-based budget is where your income minus your expenses equals zero. Every dollar has a job. This helps prevent overspending and ensures you're saving enough.",
@@ -20,13 +26,13 @@ const KNOWLEDGE_BASE = {
   emergency: "Financial experts recommend having 3-6 months of living expenses in an easily accessible emergency fund.",
 };
 
-export function ChatAssistant() {
+export function ChatAssistant({ transactions, userName }: ChatAssistantProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: "Hello! I'm your WealthWise AI Assistant. I can browse the web for real-time financial data or answer your personal finance questions. How can I help you today?",
+      content: `Hello ${userName}! I'm your WealthWise AI Assistant. I can browse the web for real-time financial data or answer questions about your personal spending. How can I help you today?`,
       timestamp: new Date(),
     }
   ]);
@@ -50,17 +56,75 @@ export function ChatAssistant() {
     }
   }, [isOpen]);
 
+  const analyzeData = (query: string): string | null => {
+      const lowerQuery = query.toLowerCase();
+      
+      const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+      const expense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+      const balance = income - expense;
+
+      if (lowerQuery.includes('balance') || lowerQuery.includes('how much money')) {
+          return `Your current total balance is **${formatCurrency(balance)}**. (Income: ${formatCurrency(income)}, Expenses: ${formatCurrency(expense)})`;
+      }
+
+      if (lowerQuery.includes('spent') || lowerQuery.includes('expense') || lowerQuery.includes('spend')) {
+          // Check for specific category
+          const categories = ['Food', 'Housing', 'Transport', 'Utilities', 'Entertainment', 'Shopping', 'Health', 'Other'];
+          const matchedCategory = categories.find(c => lowerQuery.includes(c.toLowerCase()));
+
+          if (matchedCategory) {
+              const categoryTotal = transactions
+                .filter(t => t.type === 'expense' && t.category === matchedCategory)
+                .reduce((acc, t) => acc + t.amount, 0);
+              return `You have spent a total of **${formatCurrency(categoryTotal)}** on ${matchedCategory}.`;
+          }
+          
+          return `Your total expenses amount to **${formatCurrency(expense)}**. The top spending category is ${
+              Object.entries(
+                  transactions
+                    .filter(t => t.type === 'expense')
+                    .reduce((acc: any, t) => { acc[t.category] = (acc[t.category] || 0) + t.amount; return acc; }, {})
+              ).sort((a: any, b: any) => b[1] - a[1])[0]?.[0] || 'unknown'
+          }.`;
+      }
+
+      if (lowerQuery.includes('income') || lowerQuery.includes('earned') || lowerQuery.includes('make')) {
+          return `Your total income recorded is **${formatCurrency(income)}**.`;
+      }
+      
+      if (lowerQuery.includes('transaction') && (lowerQuery.includes('how many') || lowerQuery.includes('count'))) {
+          return `You have recorded **${transactions.length}** transactions in total.`;
+      }
+
+      return null;
+  };
+
   const generateResponse = async (query: string) => {
     setIsTyping(true);
     
-    // Simulate web search for complex queries
-    if (query.length > 10) {
+    // 1. Check for data analysis intent first
+    const dataAnalysisResult = analyzeData(query);
+    if (dataAnalysisResult) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate processing
+        const newMessage: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: dataAnalysisResult,
+            timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, newMessage]);
+        setIsTyping(false);
+        return;
+    }
+
+    // 2. Simulate web search for complex queries not answered by local data
+    if (query.length > 15 && (query.toLowerCase().includes('rate') || query.toLowerCase().includes('stock') || query.toLowerCase().includes('price') || query.toLowerCase().includes('market'))) {
         setSearchQuery(query);
         await new Promise(resolve => setTimeout(resolve, 2000)); // Search delay
         setSearchQuery(null);
+    } else {
+        await new Promise(resolve => setTimeout(resolve, 1200)); // Standard thinking delay
     }
-
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Thinking delay
 
     const lowerQuery = query.toLowerCase();
     let responseText = KNOWLEDGE_BASE.default;
@@ -169,7 +233,10 @@ export function ChatAssistant() {
                   ? "bg-indigo-600 text-white rounded-tr-none" 
                   : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-none"
               )}>
-                {msg.content}
+                {/* Render basic markdown-like bolding */}
+                {msg.content.split('**').map((part, i) => 
+                    i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                )}
                 <div className={cn(
                   "text-[10px] mt-1 opacity-70",
                   msg.role === 'user' ? "text-indigo-200" : "text-slate-400"

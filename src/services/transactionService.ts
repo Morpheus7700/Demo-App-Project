@@ -1,7 +1,7 @@
 import type { Transaction } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
-const STORAGE_KEY = 'wealthwise_transactions';
+const getStorageKey = (userId: string) => `wealthwise_data_${userId}`;
 
 const SEED_DATA: Transaction[] = [
   {
@@ -39,12 +39,14 @@ const SEED_DATA: Transaction[] = [
 ];
 
 export const TransactionService = {
-  getAll: (): Transaction[] => {
-    const data = localStorage.getItem(STORAGE_KEY);
+  getAll: (userId: string): Transaction[] => {
+    const key = getStorageKey(userId);
+    const data = localStorage.getItem(key);
     if (!data) {
       // Seed initial data if empty
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_DATA));
-      return SEED_DATA;
+      const seeded = SEED_DATA.map(t => ({...t, id: uuidv4()})); // unique ids for new users
+      localStorage.setItem(key, JSON.stringify(seeded));
+      return seeded;
     }
     try {
       return JSON.parse(data);
@@ -54,24 +56,24 @@ export const TransactionService = {
     }
   },
 
-  add: (transaction: Omit<Transaction, 'id'>): Transaction => {
-    const transactions = TransactionService.getAll();
+  add: (userId: string, transaction: Omit<Transaction, 'id'>): Transaction => {
+    const transactions = TransactionService.getAll(userId);
     const newTransaction: Transaction = {
       ...transaction,
       id: uuidv4(),
     };
     const updated = [newTransaction, ...transactions];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    localStorage.setItem(getStorageKey(userId), JSON.stringify(updated));
     return newTransaction;
   },
 
-  delete: (id: string): void => {
-    const transactions = TransactionService.getAll();
+  delete: (userId: string, id: string): void => {
+    const transactions = TransactionService.getAll(userId);
     const updated = transactions.filter((t) => t.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    localStorage.setItem(getStorageKey(userId), JSON.stringify(updated));
   },
   
-  clear: (): void => {
-      localStorage.removeItem(STORAGE_KEY);
+  clear: (userId: string): void => {
+      localStorage.removeItem(getStorageKey(userId));
   }
 };

@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  Activity, 
-  Lightbulb, 
-  Plus, 
-  Trash2, 
+import {
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  Lightbulb,
+  Plus,
+  Trash2,
   Wallet,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  LogOut,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -20,6 +22,7 @@ import { TransactionService } from '../services/transactionService';
 import { InsightService } from '../services/insightService';
 import { cn, formatCurrency } from '../lib/utils';
 import { ThemeToggle } from './ThemeToggle';
+import { useAuth } from '../context/AuthContext';
 
 // --- Validation Schema ---
 const transactionSchema = z.object({
@@ -34,6 +37,7 @@ type TransactionFormData = z.infer<typeof transactionSchema>;
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1'];
 
 export default function Dashboard() {
+  const { user, logout } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [insights, setInsights] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,8 +53,10 @@ export default function Dashboard() {
 
   // Initial Load
   useEffect(() => {
-    loadData();
-  }, []);
+    if (user) {
+        loadData();
+    }
+  }, [user]);
 
   // Update insights whenever transactions change
   useEffect(() => {
@@ -58,7 +64,8 @@ export default function Dashboard() {
   }, [transactions]);
 
   const loadData = () => {
-    const data = TransactionService.getAll();
+    if (!user) return;
+    const data = TransactionService.getAll(user.id);
     setTransactions(data);
     setLoading(false);
   };
@@ -80,6 +87,7 @@ export default function Dashboard() {
 
   const handleAddTransaction = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     
     // Validate
     const result = transactionSchema.safeParse(formData);
@@ -94,7 +102,7 @@ export default function Dashboard() {
     }
 
     try {
-      TransactionService.add({
+      TransactionService.add(user.id, {
         description: formData.description,
         amount: Number(formData.amount),
         type: formData.type,
@@ -111,11 +119,44 @@ export default function Dashboard() {
   };
 
   const handleDelete = (id: string) => {
+    if (!user) return;
     if (window.confirm("Are you sure you want to delete this transaction?")) {
-        TransactionService.delete(id);
+        TransactionService.delete(user.id, id);
         toast.success("Transaction deleted");
         loadData();
     }
+  };
+  
+  const handleExportCSV = () => {
+      const headers = ['ID', 'Description', 'Amount', 'Type', 'Category', 'Date'];
+      
+      const rows = transactions.map(t => {
+          // Escape quotes by replacing " with ""
+          const safeDescription = t.description.split('"').join('""');
+          return [
+              t.id,
+              `"${safeDescription}"`, // Wrap description in quotes
+              t.amount.toFixed(2),
+              t.type,
+              t.category,
+              t.date
+          ];
+      });
+      
+      const csvContent = [
+          headers.join(','),
+          ...rows.map(row => row.join(','))
+      ].join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `wealthwise_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
   };
 
   const financials = calculateFinancials();
@@ -167,15 +208,26 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="mt-auto pt-6 border-t border-slate-100 dark:border-slate-800">
-            <div className="flex items-center justify-between">
+        <div className="mt-auto pt-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300">
+                        {user?.name.charAt(0)}
+                    </div>
+                    {user?.name}
+                </div>
+                <button onClick={logout} className="p-2 hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 hover:text-rose-500 transition-colors rounded-lg" title="Logout">
+                    <LogOut size={18} />
+                </button>
+            </div>
+            
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400 text-sm">
                     <div className="h-2 w-2 bg-emerald-400 rounded-full animate-pulse"></div>
                     Online
                 </div>
                 <ThemeToggle />
             </div>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-4">v2.1.0 • Local Persistence</p>
         </div>
       </aside>
 
@@ -192,7 +244,14 @@ export default function Dashboard() {
                 <div className="md:hidden">
                     <ThemeToggle />
                 </div>
-                <div className="flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-2 rounded-full shadow-sm border border-slate-200 dark:border-slate-800 text-sm font-medium text-slate-600 dark:text-slate-300">
+                <button 
+                    onClick={handleExportCSV}
+                    className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-sm text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                    <Download size={16} className="text-indigo-500" />
+                    <span>Export CSV</span>
+                </button>
+                <div className="hidden sm:flex items-center gap-3 bg-white dark:bg-slate-900 px-4 py-2 rounded-full shadow-sm border border-slate-200 dark:border-slate-800 text-sm font-medium text-slate-600 dark:text-slate-300">
                     <Activity size={16} className="text-indigo-500 dark:text-indigo-400" />
                     <span>{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</span>
                 </div>

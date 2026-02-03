@@ -100,17 +100,20 @@ export function ChatAssistant({ transactions, userName }: ChatAssistantProps) {
       }
       
       // Handle bolding **text**
-      const parts = line.split(/(\**.*\**)/);
+      const parts = line.split(/(\*\*.*?\*\*)/);
       return (
         <p key={i} className="mb-2">
           {parts.map((part, j) => {
             if (part.startsWith('**') && part.endsWith('**')) {
               return <strong key={j} className="text-slate-900 dark:text-white">{part.slice(2, -2)}</strong>;
             }
+            
             // Handle links [text](url)
-            if (part.match(/\([(.*?)\].*?\)/)) {
-                const match = part.match(/\([(.*?)\].*?\)/);
-                return <a key={j} href={match![2]} target="_blank" rel="noreferrer" className="text-indigo-500 hover:underline inline-flex items-center gap-0.5">{match![1]} <ExternalLink size={10}/></a>;
+            if (part.match(/\[(.*?)\]\((.*?)\)/)) {
+                const linkMatch = part.match(/\[(.*?)\]\((.*?)\)/);
+                if (linkMatch) {
+                    return <a key={j} href={linkMatch[2]} target="_blank" rel="noreferrer" className="text-indigo-500 hover:underline inline-flex items-center gap-0.5">{linkMatch[1]} <ExternalLink size={10}/></a>;
+                }
             }
             return part;
           })}

@@ -100,7 +100,7 @@ export function ChatAssistant({ transactions, userName }: ChatAssistantProps) {
       }
       
       // Handle bolding **text**
-      const parts = line.split(/(\*\*.*?\*\*)/);
+      const parts = line.split(/(\**.*\**)/);
       return (
         <p key={i} className="mb-2">
           {parts.map((part, j) => {
@@ -108,8 +108,8 @@ export function ChatAssistant({ transactions, userName }: ChatAssistantProps) {
               return <strong key={j} className="text-slate-900 dark:text-white">{part.slice(2, -2)}</strong>;
             }
             // Handle links [text](url)
-            if (part.match(/\[(.*?)\]\((.*?)\)/)) {
-                const match = part.match(/\[(.*?)\]\((.*?)\)/);
+            if (part.match(/\([(.*?)\].*?\)/)) {
+                const match = part.match(/\([(.*?)\].*?\)/);
                 return <a key={j} href={match![2]} target="_blank" rel="noreferrer" className="text-indigo-500 hover:underline inline-flex items-center gap-0.5">{match![1]} <ExternalLink size={10}/></a>;
             }
             return part;
@@ -240,147 +240,6 @@ export function ChatAssistant({ transactions, userName }: ChatAssistantProps) {
                 <Activity size={10} /> Data Aware
              </div>
           </div>
-        </div>
-      </div>
-    </>
-  );
-}
-
-  return (
-    <>
-      {/* Floating Action Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className={cn(
-          "fixed bottom-6 right-6 p-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg shadow-indigo-600/30 transition-all duration-300 z-40 flex items-center gap-2",
-          isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"
-        )}
-      >
-        <Sparkles size={24} />
-        <span className="font-semibold hidden sm:inline">Ask AI</span>
-      </button>
-
-      {/* Chat Interface */}
-      <div
-        className={cn(
-          "fixed bottom-6 right-6 w-[90vw] sm:w-[400px] h-[600px] max-h-[80vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden transition-all duration-300 z-50 origin-bottom-right",
-          isOpen ? "scale-100 opacity-100 translate-y-0" : "scale-90 opacity-0 translate-y-10 pointer-events-none"
-        )}
-      >
-        {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-4 flex items-center justify-between text-white">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 backdrop-blur-md rounded-lg">
-              <Bot size={24} className="text-white" />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg">Smart Insight AI</h3>
-              <div className="flex items-center gap-1.5 text-xs text-indigo-100">
-                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                Online & Connected
-              </div>
-            </div>
-          </div>
-          <button 
-            onClick={() => setIsOpen(false)}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-slate-950/50 scroll-smooth">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={cn(
-                "flex gap-3 max-w-[85%]",
-                msg.role === 'user' ? "ml-auto flex-row-reverse" : ""
-              )}
-            >
-              <div className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                msg.role === 'user' ? "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300" : "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400"
-              )}>
-                {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-              </div>
-              
-              <div className={cn(
-                "p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm",
-                msg.role === 'user' 
-                  ? "bg-indigo-600 text-white rounded-tr-none" 
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-none"
-              )}>
-                {/* Render basic markdown-like bolding */}
-                {msg.content.split('**').map((part, i) => 
-                    i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-                )}
-                <div className={cn(
-                  "text-[10px] mt-1 opacity-70",
-                  msg.role === 'user' ? "text-indigo-200" : "text-slate-400"
-                )}>
-                  {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Search Indicator */}
-          {searchQuery && (
-             <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shrink-0 text-indigo-600 dark:text-indigo-400">
-                    <Globe size={16} className="animate-pulse" />
-                </div>
-                <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-3">
-                    <Loader2 size={16} className="animate-spin text-indigo-500" />
-                    <span className="text-sm text-slate-600 dark:text-slate-300">Searching web for <span className="font-semibold">"{searchQuery}"</span>...</span>
-                </div>
-             </div>
-          )}
-
-          {/* Typing Indicator */}
-          {isTyping && !searchQuery && (
-             <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center shrink-0 text-indigo-600 dark:text-indigo-400">
-                    <Bot size={16} />
-                </div>
-                <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm">
-                    <div className="flex gap-1">
-                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-                        <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></span>
-                    </div>
-                </div>
-             </div>
-          )}
-          
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input Area */}
-        <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
-          <form onSubmit={handleSendMessage} className="relative">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Ask about your finances..."
-              className="w-full pl-4 pr-12 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all text-sm text-slate-900 dark:text-white placeholder:text-slate-400"
-              disabled={isTyping || !!searchQuery}
-            />
-            <button
-              type="submit"
-              disabled={!inputValue.trim() || isTyping || !!searchQuery}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg transition-all shadow-sm"
-            >
-              <Send size={16} />
-            </button>
-          </form>
-          <p className="text-[10px] text-center text-slate-400 mt-2">
-            AI can make mistakes. Please verify important financial information.
-          </p>
         </div>
       </div>
     </>

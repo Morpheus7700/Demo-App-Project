@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Bot, Globe, Loader2, Sparkles, User, ExternalLink } from 'lucide-react';
+import { X, Send, Bot, Globe, Loader2, Sparkles, User, ExternalLink, Activity } from 'lucide-react';
 import { cn } from '../lib/utils';
 import type { Transaction } from '../types';
 import { AIService } from '../services/aiService';

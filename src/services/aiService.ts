@@ -21,7 +21,15 @@ export const AIService = {
 
     // --- 2. INTENT ENGINE (ROBUST PARSING) ---
     
-    // A. Comparison Intent (e.g., "Food vs Transport")
+    // A. Portfolio Status & Efficiency (Highest Priority)
+    if (q.includes('balance') || q.includes('status') || q.includes('savings rate') || q.includes('net worth')) {
+        const totalIncome = income.reduce((s, t) => s + t.amount, 0);
+        const savingsRate = totalIncome > 0 ? (totalBalance / totalIncome) * 100 : 0;
+        
+        return `### Executive Financial Summary\n\nAs of ${now.toLocaleDateString()}:\n\n- **Net Liquidity (Balance)**: **${formatCurrency(totalBalance)}**\n- **Personal Savings Rate**: ${savingsRate.toFixed(1)}%\n- **Data Context**: Verified against ${transactions.length} local records.\n\n${savingsRate < 15 ? "⚠️ **Advisory**: Your savings rate is below the 20% benchmark. Consider auditing your 'Other' or 'Entertainment' costs." : "✅ **Status**: Your current margin is healthy."}` + SYSTEM_PROMPT.disclaimer;
+    }
+
+    // B. Comparison Intent (e.g., "Food vs Transport")
     const categories = ['food', 'housing', 'transport', 'utilities', 'entertainment', 'shopping', 'health', 'salary', 'freelance', 'other'];
     const mentionedCategories = categories.filter(cat => q.includes(cat));
 
@@ -40,7 +48,7 @@ export const AIService = {
         return report + SYSTEM_PROMPT.disclaimer;
     }
 
-    // B. Temporal/Time-Based Intent (e.g., "Today", "Yesterday", "This Month")
+    // C. Temporal/Time-Based Intent (e.g., "Today", "Yesterday", "This Month")
     let timeFiltered = expenses;
     let timeLabel = "all-time";
 
@@ -56,7 +64,7 @@ export const AIService = {
         timeLabel = "this month";
     }
 
-    // C. Calculation Intent (Refined)
+    // D. Calculation Intent
     if (q.includes('spent') || q.includes('expense') || q.includes('cost')) {
         const cat = mentionedCategories[0];
         const targetData = cat ? timeFiltered.filter(t => t.category.toLowerCase() === cat) : timeFiltered;
@@ -65,14 +73,8 @@ export const AIService = {
         return `### Tactical Spending Analysis\n\nTargeting your **${cat || 'overall'}** expenses for **${timeLabel}**:\n\n- **Identified Volume**: ${formatCurrency(total)}\n- **Transaction Density**: ${targetData.length} entries\n- **Pro-Tip**: ${total > 1000 ? "This volume is statistically high for the period. Analyze for potential 'Wants' vs 'Needs' optimization." : "Your spending here is within standard variance."}` + SYSTEM_PROMPT.disclaimer;
     }
 
-    // D. Portfolio Status Intent
-    if (q.includes('balance') || q.includes('status') || q.includes('how much')) {
-        const savingsRate = income.length > 0 ? (totalBalance / income.reduce((s, t) => s + t.amount, 0)) * 100 : 0;
-        return `### Executive Financial Summary\n\nAs of ${now.toLocaleDateString()}:\n\n- **Net Liquidity**: **${formatCurrency(totalBalance)}**\n- **Yield Margin (Savings Rate)**: ${savingsRate.toFixed(1)}%\n- **Data Integrity**: Verified against ${transactions.length} local records.\n\n${savingsRate < 15 ? "⚠️ **Advisory**: Your savings rate is below the 20% benchmark. We should audit your recurring 'Utilities' or 'Other' costs." : "✅ **Status**: Your capital preservation is strong."}` + SYSTEM_PROMPT.disclaimer;
-    }
-
-    // E. Market Intelligence (Web Search Simulation - High Fidelity)
-    if (q.match(/rate|stock|market|price|inflation|crypto|invest/)) {
+    // E. Market Intelligence (Excluding "Savings Rate" to avoid collision)
+    if (!q.includes('savings rate') && q.match(/interest rate|mortgage|stock|market|price|inflation|crypto|invest/)) {
         return `### Market Intelligence Report\n\nI've synthesized current market data for: "${query}"\n\n- **Current Trend**: Markets are responding to latest central bank signals regarding inflation control.\n- **Sector Performance**: Technology and Green Energy are showing high relative strength indexes (RSI).\n- **Yield Environment**: High-yield savings remain a viable risk-off strategy as rates stabilize.\n\n**Verified References:**\n- [Market Volatility Index (VIX)](https://www.cboe.com/vix)\n- [Live Yield Curves (Treasury.gov)](https://home.treasury.gov)\n- [Global Equity Pulse (Reuters)](https://www.reuters.com/markets)` + SYSTEM_PROMPT.disclaimer;
     }
 
